@@ -12,29 +12,21 @@ class FlattenerTests(TestCase):
 
     def test_root_must_be_an_object(self):
         # for instance `null` is a legitimate json object
-        with self.assertRaises(TypeError):
-            self._flatten(None)
+        self._assert_error(None, 'Root must be a obj')
 
     def test_all_types_of_leaf_values_are_legitimate(self):
         values = [1, 1.2, None, float('inf'), 'str']
         for value in values:
             self._assert_flatten({'a': {'b': value}}, {'a.b': value})
 
+    def test_errors_are_reported_with_their_location_in_the_tree(self):
+        self._assert_error({'a': {'b': []}}, 'At a.b')
+
     def test_arrays_are_not_supported(self):
-        with self.assertRaises(CanNotBeFlattenedError) as raises_context:
-            self._flatten({'a': {'b': []}})
-        error_message = repr(raises_context.exception)
-        self.assertIn('At a.b', error_message)
-        self.assertIn('Arrays can not be flattened', error_message)
+        self._assert_error({'a': {'b': []}}, 'Arrays can not be flattened')
 
     def test_unexpected_json_values(self):
-        with self.assertRaises(Exception) as raises_context:
-            self._flatten({'c': 4j})
-        self.assertIn('Unexpected', repr(raises_context.exception))
-
-    def _assert_flatten(self, nested, expected):
-        actual = self._flatten(nested)
-        self.assertDictEqual(expected, actual)
+        self._assert_error({'c': 4j}, 'Unexpected')
 
     def test_several_leaf_values(self):
         nested = {
@@ -52,6 +44,20 @@ class FlattenerTests(TestCase):
             "c.e": "test"
         }
         self._assert_flatten(nested, expected)
+
+    def test_unacceptable_object_keys(self):
+        self._assert_error({1: 2})
+        self._assert_error({'a.b': 2})
+
+    def _assert_flatten(self, nested, expected):
+        actual = self._flatten(nested)
+        self.assertDictEqual(expected, actual)
+
+    def _assert_error(self, nested, expected_message=None):
+        with self.assertRaises(CanNotBeFlattenedError) as raises_context:
+            self._flatten(nested)
+        if expected_message:
+            self.assertIn(expected_message, repr(raises_context.exception))
 
     def _flatten(self, obj):
         return flatten_json_object(obj)

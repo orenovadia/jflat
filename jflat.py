@@ -19,8 +19,7 @@ class Flattener(object):
         self._result = {}
 
     def flatten(self, obj):
-        if not isinstance(obj, dict):
-            self._error('Root must be a obj, got {}'.format(type(obj)))
+        self._validate(isinstance(obj, dict), 'Root must be a obj, got {}'.format(type(obj)))
         self._visit(obj)
         return self._result
 
@@ -39,11 +38,20 @@ class Flattener(object):
 
     def _visit_dict(self, obj):
         for key, value in obj.items():
+            self._validate_key(key)
             with self._tracker.inside(key):
                 self._visit(value)
 
     def _visit_leaf(self, value):
         self._result[self._tracker.path()] = value
+
+    def _validate_key(self, key):
+        self._validate(isinstance(key, str), 'Object keys must be strings: {}'.format(key))
+        self._validate('.' not in key, 'Object keys may not contain ".": {}'.format(key))
+
+    def _validate(self, condition, message):
+        if not condition:
+            self._error(message)
 
     def _error(self, message):
         # type: (str) -> None
