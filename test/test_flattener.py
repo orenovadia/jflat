@@ -13,7 +13,7 @@ class FlattenerTests(TestCase):
     def test_root_must_be_an_object(self):
         # for instance `null` is a legitimate json object
         with self.assertRaises(TypeError):
-            flatten_json_object(None)
+            self._flatten(None)
 
     def test_all_types_of_leaf_values_are_legitimate(self):
         values = [1, 1.2, None, float('inf'), 'str']
@@ -22,11 +22,19 @@ class FlattenerTests(TestCase):
 
     def test_arrays_are_not_supported(self):
         with self.assertRaises(CanNotBeFlattenedError) as raises_context:
-            flatten_json_object({'a': {'b': []}})
+            self._flatten({'a': {'b': []}})
         error_message = repr(raises_context.exception)
         self.assertIn('At a.b', error_message)
         self.assertIn('Arrays can not be flattened', error_message)
 
+    def test_unexpected_json_values(self):
+        with self.assertRaises(Exception) as raises_context:
+            self._flatten({'c': 4j})
+        self.assertIn('Unexpected', repr(raises_context.exception))
+
     def _assert_flatten(self, nested, expected):
-        actual = flatten_json_object(nested)
+        actual = self._flatten(nested)
         self.assertDictEqual(expected, actual)
+
+    def _flatten(self, obj):
+        return flatten_json_object(obj)

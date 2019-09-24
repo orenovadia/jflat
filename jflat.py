@@ -34,6 +34,8 @@ class Flattener(object):
         if isinstance(obj, list):
             self._error('Arrays can not be flattened')
 
+        raise self._error('Unexpected value in primitive JSON object {}'.format(type(obj)))
+
     def _visit_dict(self, obj):
         for key, value in obj.items():
             with self._tracker.inside(key):
