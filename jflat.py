@@ -6,19 +6,27 @@ import sys
 from contextlib import contextmanager
 
 try:
+    # Py 2
     string_type = unicode
-except:
+except NameError:
     string_type = str
 
 
 def flatten_json_object(obj):
     # type: (dict) -> dict
-    return Flattener().flatten(obj)
+    """
+    For a dictionary of primitive JSON values,
+    return a flat representation where nested keys are '.' separated.
+
+    >>> flatten_json_object({"a": {"b" : 1}})
+    >>> {"a.b": 1}
+    """
+    return _Flattener().flatten(obj)
 
 
-class Flattener(object):
+class _Flattener(object):
     def __init__(self):
-        self._tracker = PathTracker()
+        self._tracker = _PathTracker()
         self._result = {}
 
     def flatten(self, obj):
@@ -50,7 +58,7 @@ class Flattener(object):
 
     def _validate_key(self, key):
         self._validate(isinstance(key, string_type), 'Object keys must be strings: '
-                                             'got {} of type {}'.format(key, type(key)))
+                                                     'got {} of type {}'.format(key, type(key)))
         self._validate('.' not in key, 'Object keys may not contain ".": {}'.format(key))
 
     def _validate(self, condition, message):
@@ -66,7 +74,7 @@ class CanNotBeFlattenedError(TypeError):
     pass
 
 
-class PathTracker(object):
+class _PathTracker(object):
     def __init__(self):
         self._stack = []
 
@@ -79,7 +87,7 @@ class PathTracker(object):
             self._stack.pop()
 
     def path(self):
-        # This method is not optimal for balanced trees
+        # This method is not optimal for balanced-ish trees
         # because we concat the same prefix multiple times
         # However, it is more elegant than keeping a stack of
         # all the prefixes so far
