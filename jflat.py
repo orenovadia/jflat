@@ -2,6 +2,11 @@ from __future__ import unicode_literals
 
 from contextlib import contextmanager
 
+try:
+    string_type = unicode
+except:
+    string_type = str
+
 
 def flatten_json_object(obj):
     # type: (dict) -> dict
@@ -22,8 +27,12 @@ class Flattener(object):
     def _visit(self, obj):
         if isinstance(obj, dict):
             self._visit_dict(obj)
-        else:
+
+        if obj is None or isinstance(obj, (bool, int, float, string_type)):
             self._visit_value(obj)
+
+        if isinstance(obj, list):
+            self._error('Arrays can not be flattened')
 
     def _visit_dict(self, obj):
         for key, value in obj.items():
@@ -32,6 +41,9 @@ class Flattener(object):
 
     def _visit_value(self, value):
         self._result[self._tracker.path()] = value
+
+    def _error(self, message):
+        raise CanNotBeFlattenedError('At {}: {}'.format(self._tracker.path(), message))
 
 
 class CanNotBeFlattenedError(ValueError):

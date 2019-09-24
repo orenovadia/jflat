@@ -20,6 +20,13 @@ class FlattenerTests(TestCase):
         for value in values:
             self._assert_flatten({'a': {'b': value}}, {'a.b': value})
 
+    def test_arrays_are_not_supported(self):
+        with self.assertRaises(CanNotBeFlattenedError) as raises_context:
+            flatten_json_object({'a': {'b': []}})
+        error_message = repr(raises_context.exception)
+        self.assertIn('At a.b', error_message)
+        self.assertIn('Arrays can not be flattened', error_message)
+
     def _assert_flatten(self, nested, expected):
         actual = flatten_json_object(nested)
         self.assertDictEqual(expected, actual)
