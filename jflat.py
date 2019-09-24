@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+import argparse
+import json
+import sys
 from contextlib import contextmanager
 
 try:
@@ -46,7 +49,8 @@ class Flattener(object):
         self._result[self._tracker.path()] = value
 
     def _validate_key(self, key):
-        self._validate(isinstance(key, str), 'Object keys must be strings: {}'.format(key))
+        self._validate(isinstance(key, string_type), 'Object keys must be strings: '
+                                             'got {} of type {}'.format(key, type(key)))
         self._validate('.' not in key, 'Object keys may not contain ".": {}'.format(key))
 
     def _validate(self, condition, message):
@@ -81,3 +85,20 @@ class PathTracker(object):
         # all the prefixes so far
         # And it might even be faster for workloads with unbalanced nesting
         return '.'.join(self._stack)
+
+
+def _main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
+    args = parser.parse_args()
+    _flatten_file(args.infile)
+
+
+def _flatten_file(infile):
+    nested = json.load(infile, encoding='utf-8')
+    flat = flatten_json_object(nested)
+    print(json.dumps(flat, indent=2))
+
+
+if __name__ == '__main__':
+    _main()

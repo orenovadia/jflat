@@ -1,7 +1,10 @@
 from __future__ import unicode_literals
 
+import json
+import subprocess
 from unittest import TestCase
 
+import jflat
 from jflat import flatten_json_object, CanNotBeFlattenedError
 
 
@@ -48,6 +51,12 @@ class FlattenerTests(TestCase):
     def test_unacceptable_object_keys(self):
         self._assert_error({1: 2})
         self._assert_error({'a.b': 2})
+
+    def test_cli_integration(self):
+        pipe = subprocess.PIPE
+        proc = subprocess.Popen(['python', jflat.__file__], stdin=pipe, stdout=pipe)
+        stdout, _ = proc.communicate(json.dumps({'a': {'b': 1}}).encode('utf8'))
+        self.assertEqual({'a.b': 1}, json.loads(stdout.decode('utf-8')))
 
     def _assert_flatten(self, nested, expected):
         actual = self._flatten(nested)
