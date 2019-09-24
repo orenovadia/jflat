@@ -36,5 +36,22 @@ class FlattenerTests(TestCase):
         actual = self._flatten(nested)
         self.assertDictEqual(expected, actual)
 
+    def test_several_leaf_values(self):
+        nested = {
+            "a": 1,
+            "b": True,
+            "c": {
+                "d": 3,
+                "e": "test"
+            }
+        }
+        expected = {
+            "a": 1,
+            "b": True,
+            "c.d": 3,
+            "c.e": "test"
+        }
+        self._assert_flatten(nested, expected)
+
     def _flatten(self, obj):
         return flatten_json_object(obj)
