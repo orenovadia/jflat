@@ -104,7 +104,12 @@ def _main():
 
 def _flatten_file(infile):
     nested = json.load(infile, encoding='utf-8')
-    flat = flatten_json_object(nested)
+    try:
+        flat = flatten_json_object(nested)
+    except CanNotBeFlattenedError as e:
+        sys.stderr.write(string_type(e) + '\n')
+
+        exit(2)
     print(json.dumps(flat, indent=2))
 
 
